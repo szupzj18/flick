@@ -1,102 +1,83 @@
 # flick ⚡
 
-**flick** 是面向 iOS 模拟器的快速手势决策与动作执行工具。
+**A fast iOS simulator agent with a dynamic, indexed action space.**
 
-它专为大语言模型（如 Codex、Claude Code）的移动端 Computer Use 场景设计，作为 Agent 的“底层手势小脑”：大模型负责高阶规划与复杂推理，flick 在底层接收单步意图，在 500 毫秒内完成候选元素匹配、防遮挡校验并执行真实手势（点击、滑动、输入）。
+Give it one micro-goal. [TypeSafe's Jev](https://typesafe.ai) picks an operation and an element. The simulator executes via [Facebook idb](https://github.com/facebook/idb). Built as a sub-second "reflex layer" for parent coding agents (Codex, Claude Code) driving mobile UIs.
 
----
-
-## 核心特性
-
-- **低时延决策 (~500 ms)**：采用 TypeSafe Jev 离散决策模型替代通用大模型做微观手势选择，单步决策时延相比常规 LLM 降低约 85%。
-- **无截图开销**：直接读取并清洗 iOS 底层辅助功能树（Accessibility Tree），将整屏数百个原始视图压缩为十余个紧凑的结构化候选元素，无需截图上传与多模态视觉计算。
-- **内置安全链**：
-  - **动态重定位 (Relocalize)**：克服移动端视图无持久句柄的问题，在执行前对目标进行几何与属性一致性重校验。
-  - **防遮挡与防抢点校验 (Hit-Check)**：下发手势前通过点命中测试验证实际触控层，防止通知横幅、加载弹窗遮挡导致误触。
-  - **敏感操作拦截**：命中支付、删除、关机等关键词时自动拒绝执行并上报。
-- **连续置信度支持**：原生输出 0.0~1.0 连续归一化的置信度分布，支持外部系统配置安全门禁（如低于 0.60 自动暂停并交还人工或大模型干预）。
-- **单文件独立运行**：支持编译为独立的二进制文件，无需 Python 或虚拟环境依赖，自带 API Key (BYOK) 即插即用。
+**593 ms per decision cycle.** Zero screenshots in the loop, 7× faster than frontier LLMs, with calibrated probabilities on every action.
 
 ---
 
-## 协作架构
+## The action space
 
-```
-┌──────────────────────────────────────┐
-│  父 Agent (Codex / Claude Code 等)   │  负责跨应用规划、复杂推理与文本生成
-└──────────────────┬───────────────────┘
-                   │  单步意图: flick run "<goal>" --completion "<condition>"
-                   ▼
-┌──────────────────────────────────────┐
-│                flick                 │
-│  ┌────────────────────────────────┐  │
-│  │ 1. 结构化观测 (AX 树原子清洗)   │  │
-│  │ 2. Jev 决策 (多 Head 并行分类)  │  │  ~500 ms 单步闭环
-│  │ 3. 安全校验 (重定位 + 命中测试) │  │
-│  │ 4. 物理执行 (idb tap/swipe/cmd)│  │
-│  └────────────────────────────────┘  │
-└──────────────────┬───────────────────┘
-                   │  真实手势 / 读回校验
-                   ▼
-┌──────────────────────────────────────┐
-│        iPhone 模拟器 (iOS 26)        │
-└──────────────────────────────────────┘
+Every observation produces a cleaned, indexed element table from the iOS accessibility tree:
+
+```text
+[1] Button       General                  · uid=com.apple.settings.general
+[2] Button       Accessibility            · uid=com.apple.settings.accessibility
+[3] SearchField  Search                   · value=Search
+[4] Switch       Airplane Mode            · value=0
+...
 ```
 
+The operations are `TAP`, `TYPE_TEXT`, `SCROLL_UP`, `SCROLL_DOWN`, `WAIT`, `DISMISS_MODAL`, `DONE`, and `BLOCKED`. Only valid operations and targets are offered.
+
+```text
+                                one TypeSafe request
+                               ┌───────────────────────────┐
+screen → cleaned AX elements ──▶ operation                 │
+                               │ tap_target                │
+                               │ type_target, if present   │
+                               │ goal_satisfied (noul)     │
+                               └─────────────┬─────────────┘
+                                   use the matching target
+                                             │
+                              TAP [1] ───────┤──→ describe-point & tap
+                          TYPE_TEXT [3] ─────┘
+                                    ↓
+                              simctl pbcopy + Cmd+V paste
+```
+
+Target questions are speculative. If the operation is `TAP`, only `tap_target` executes. Two decisions, **one network round trip**.
+
+Model output never becomes arbitrary selectors, raw coordinates, or blind taps. Every target is resolved from an observed element and validated before execution.
+
 ---
 
-## 快速开始
-
-### 依赖要求
-- macOS 系统与 Xcode Command Line Tools
-- 已安装并启动的 iOS 模拟器
-- [Facebook idb](https://github.com/facebook/idb) (`idb_companion` 与 `idb-cli`)
-- TypeSafe API Key（在 [TypeSafe AI](https://typesafe.ai) 获取）
-
-### 安装
-
-直接使用预编译的单文件二进制（或从源码编译）：
+## Try it
 
 ```bash
-# 从源码构建独立二进制 (依赖 uv)
+# 1. Clone & install
 git clone https://github.com/szupzj18/flick.git
 cd flick
 uv sync
-uv run pyinstaller --noconfirm --clean --onefile --name flick main.py
 
-# 安装至系统路径
+# 2. Build standalone binary (zero Python dependency)
+uv run python -m PyInstaller --noconfirm --clean --onefile --name flick main.py
 cp dist/flick ~/.local/bin/flick
-```
 
-验证安装：
-```bash
-flick --help
+# 3. Observe the current booted simulator
+export IDB_UDID="<your-simulator-udid>"
+flick observe
 ```
 
 ---
 
-## 使用方式
+## Single-step agent execution
 
-设置目标设备 UDID（或通过 `--udid` 传参）：
-```bash
-export IDB_UDID="<your-simulator-udid>"
-```
-
-### 1. 作为 Agent 工具单步执行 (`flick run`)
-
-这是提供给外部大模型或自动化脚本调用的核心命令。每次调用执行单步操作，并向标准输出打印最新的界面状态 JSON：
+`flick run` is the primary entrypoint for LLM agent loops. It executes a single bounded action and returns structured observations for the calling LLM to plan the next step:
 
 ```bash
-flick run "点击通用设置" \
-  --completion "进入了包含关于本机菜单的子页面" \
-  --api-key "your-typesafe-key"
+flick run "Tap General" \
+  --completion "General settings page with About row is visible" \
+  --api-key "$TYPESAFE_API_KEY"
 ```
 
-**输出格式示例**：
+**JSON Output:**
 ```json
 {
   "status": "success",
-  "action_taken": "Executed TAP on '通用'",
+  "action_taken": "Executed TAP on 'General'",
   "page_changed": true,
   "goal_satisfied_probability": 0.04,
   "current_screen": {
@@ -105,51 +86,74 @@ flick run "点击通用设置" \
       {
         "index": "1",
         "role": "Button",
-        "label": "关于本机",
+        "label": "About",
         "value": "",
         "operations": ["TAP"]
       }
     ],
-    "page_text": "设置\n通用\n关于本机..."
+    "page_text": "Settings\nGeneral\nAbout..."
   }
 }
 ```
 
-如需输入文本，提供 `--text` 参数，底层自动通过剪贴板与模拟器热键安全粘贴：
+For text input, pass `--text`. It is safely pasted via `simctl pbcopy` and verified on readback:
 ```bash
-flick run "在搜索框输入查询词" \
-  --completion "搜索框内容已输入" \
-  --text "李永乐老师"
-```
-
-### 2. 交互式调试与观测 (`flick observe`)
-
-用于人机调试，查看 flick 底层提取清洗后的可交互元素表：
-
-```bash
-# 打印当前屏幕清洗后的决策元素列表
-flick observe
-
-# 切换指定应用并输出完整快照 JSON
-flick observe --app com.apple.Preferences --json
+flick run "Enter search query" \
+  --completion "Search field contains query" \
+  --text "Hello World"
 ```
 
 ---
 
-## 实测性能对比
+## Why it moves
 
-在真实应用界面（包含复杂无障碍树与横向滑动栏的 App）下，flick (Jev 1.13.0) 与前沿通用大模型 (gemini-3.8-flash) 的单步决策对比数据：
+- **One request per decision cycle.** Operation, target heads, and completion noul share the same observed state in a single payload.
+- **No screenshots in the agent loop.** Jev consumes structured accessibility state (~3 KB per screen). No multimodal vision tokens, no image uploads.
+- **Atomic AX snapshot.** Reads visible controls, names, roles, values, and coordinates in one `axbridge` call (~190 ms). Private chrome, duplicate shadow labels, and off-screen nodes are stripped before inference.
+- **Validate the target before input.** Prior to tapping, `flick` relocalizes the target in the fresh frame and verifies `describe-point(x, y)` matches the target label. Accidental banner clicks and navigation race conditions are rejected.
+- **Unicode-safe text entry.** Bypasses `idb ui text`'s ASCII-only keycode limitation by writing to the simulator pasteboard and triggering keyboard shortcuts, verifying the resulting `AXValue` on readback.
+- **Calibrated confidence gates.** Returns native continuous probabilities (0.0–1.0). If confidence falls below 0.60 or a sensitive keyword (pay, delete, erase) is detected, execution aborts and escalates to the parent model.
 
-| 评估维度 | flick (Jev 1.13.0) | 通用大模型 (LLM) | 表现差异 |
+---
+
+## Benchmark: flick vs LLM
+
+Evaluated on real native iOS application interfaces (12 to 24 interactive controls, deep scroll views):
+
+| Metric | flick (Jev 1.13.0) | Frontier LLM (Gemini 3.8 Flash) | Notes |
 |---|---:|---:|---|
-| **平均端到端时延** | **593.8 ms** | 4143.4 ms | **flick 提速 7.0 倍** |
-| **操作类型准确率** | **90.0% (9/10)** | **90.0% (9/10)** | 持平 |
-| **手势物理语义理解** | **正确 (SCROLL_UP)** | 错误 (SCROLL_DOWN) | 大模型混淆了“向下翻看”与触控手势方向 |
-| **确定性置信度** | **原生提供 (0.0~1.0)** | 不支持 (自回归文本) | flick 支持直接配置阈值拦截异常 |
-| **格式解析故障风险** | **零风险 (Typed API)** | 存在 JSON 解析异常风险 | flick 后端强约束，无字段幻觉 |
+| **Average End-to-End Latency** | **593.8 ms** | 4143.4 ms | **7.0× faster** |
+| **Operation Accuracy** | **90.0% (9/10)** | **90.0% (9/10)** | Matched accuracy |
+| **Target Accuracy** | 90.0% (9/10) | **100.0% (10/10)** | |
+| **Overall Task Success** | **90.0% (9/10)** | **90.0% (9/10)** | |
+| **Gesture Semantics (Scroll)** | **Correct (`SCROLL_UP`)** | Inverted (`SCROLL_DOWN`) | LLM confused colloquial "scroll down" with touch gesture |
+| **Continuous Confidence** | **Yes (0.0–1.0)** | None (autoregressive text) | Direct probability gate for safe aborts |
+| **Format Error Risk** | **Zero (Typed API)** | JSON parse / schema drift | |
 
 ---
 
-## 许可证
+## Small enough to read
+
+The entire codebase is ~700 lines of Python:
+
+| File | Job |
+|---|---|
+| [cli.py](flick/cli.py) | CLI commands (`run`, `observe`, `dump`, `shot`) |
+| [observer.py](flick/observer.py) | Atomic AX tree snapshot, element pruning, relocalization |
+| [model.py](flick/model.py) | Multi-head choice questions & probability validation |
+| [executor.py](flick/executor.py) | Relocalization, hit-checks, safe dispatch, and escalation |
+| [device.py](flick/device.py) | Simulator bridge, CJK pasteboard, and HID gestures |
+
+---
+
+## Limits
+
+- **Simulators only**: idb accessibility inspection relies on private Simulator bridge interfaces; physical devices are not supported.
+- **Accessibility dependent**: Custom views without accessibility traits (e.g. Flutter without semantics, Unity/Metal games) are not visible to the observer.
+- **Complex gestures out of scope**: Long press, pinch-to-zoom, drag-and-drop, and slider adjustments are rejected at the operation gate.
+
+---
+
+## License
 
 [MIT](LICENSE)
