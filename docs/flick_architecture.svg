@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 700; font-size: 24px; fill: #0f172a; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; fill: #64748b; }
+      .node-card { fill: #ffffff; stroke: #e2e8f0; stroke-width: 1.5; rx: 12px; }
+      .card-header { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 700; font-size: 15px; }
+      .card-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12.5px; fill: #334155; }
+      .badge-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; font-weight: 700; }
+      .arrow { stroke: #6366f1; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .label-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12px; font-weight: 600; fill: #4338ca; }
+    </style>
+    <marker id="arrow-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#6366f1" />
+    </marker>
+    <filter id="shadow" x="-3%" y="-2%" width="106%" height="108%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.06" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="760" class="bg" />
+
+  <!-- Top Title -->
+  <text x="50" y="48" class="title">flick 架构设计与手势决策闭环</text>
+  <text x="50" y="74" class="subtitle">面向移动端 Computer Use 的“神经反射”层：大模型负责高阶规划，flick 负责单步物理手势闭环</text>
+
+  <!-- Section 1: Parent Agent (Top Layer) -->
+  <g transform="translate(50, 100)" filter="url(#shadow)">
+    <rect width="1100" height="84" class="node-card" />
+    <rect x="0" y="0" width="8" height="84" fill="#3b82f6" rx="4" />
+    <text x="28" y="34" class="card-header" fill="#1e40af">父 Agent / 系统二思考 (Codex / Claude Code / LLM Harness)</text>
+    <text x="28" y="60" class="card-body">职责：跨应用多步长程规划、复杂上下文推理、未知异常诊断与任务终验。</text>
+    
+    <rect x="940" y="28" width="130" height="28" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1" rx="6" />
+    <text x="965" y="46" class="badge-text" fill="#1d4ed8">耗时 ~3-5s / 步</text>
+  </g>
+
+  <!-- Connecting Arrow Down: Step Intent -->
+  <path d="M 600 184 L 600 230" class="arrow" marker-end="url(#arrow-head)" />
+  <rect x="445" y="197" width="310" height="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2" rx="6" />
+  <text x="457" y="213" class="label-text">下发单步意图: flick run &lt;goal&gt; --completion &lt;cond&gt;</text>
+
+  <!-- Section 2: flick Reflex Core Container -->
+  <g transform="translate(50, 240)" filter="url(#shadow)">
+    <!-- Container Box -->
+    <rect width="1100" height="375" fill="#ffffff" stroke="#6366f1" stroke-width="2" rx="14" />
+    <rect x="0" y="0" width="1100" height="38" fill="#f5f3ff" rx="14" />
+    <rect x="0" y="26" width="1100" height="12" fill="#f5f3ff" />
+    <text x="24" y="25" font-family="-apple-system, sans-serif" font-weight="700" font-size="13" fill="#4f46e5">FLICK 闭环执行层 (JEV 1.13.0 + IDB 驱动) · 单步耗时 593 ms · 提速 7.0×</text>
+
+    <!-- Step 1: Observation & Cleaning -->
+    <g transform="translate(24, 56)">
+      <rect width="240" height="295" class="node-card" stroke="#e0e7ff" />
+      <rect x="14" y="14" width="76" height="22" fill="#e0e7ff" rx="5" />
+      <text x="20" y="29" class="badge-text" fill="#3730a3">1. 结构化观测</text>
+      <text x="14" y="60" class="card-header" fill="#0f172a">AX 树原子清洗</text>
+      
+      <text x="14" y="90" class="card-body">
+        <tspan x="14" dy="0">• <tspan font-weight="700">后端固定</tspan>: idb axbridge (~190ms)</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">剪枝去噪</tspan>: 450+ 原始节点压缩</tspan>
+        <tspan x="26" dy="20">过滤私有视图/装饰/隐藏图层</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">生成元素表</tspan>: 10~25 紧凑候选</tspan>
+        <tspan x="26" dy="20">提取 [ID] Role, 标签, 几何坐标</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">零截图开销</tspan>: 纯文本 &lt;3KB</tspan>
+      </text>
+
+      <rect x="14" y="250" width="212" height="32" fill="#f8fafc" stroke="#e2e8f0" rx="6" />
+      <text x="24" y="270" font-size="11.5" font-weight="600" fill="#64748b">输出: 归一化可交互 Snapshot</text>
+    </g>
+
+    <!-- Arrow 1 -> 2 -->
+    <path d="M 264 200 L 288 200" class="arrow" marker-end="url(#arrow-head)" />
+
+    <!-- Step 2: Jev Multi-Head Decision -->
+    <g transform="translate(288, 56)">
+      <rect width="250" height="295" class="node-card" stroke="#e0e7ff" />
+      <rect x="14" y="14" width="76" height="22" fill="#fdf4ff" rx="5" />
+      <text x="20" y="29" class="badge-text" fill="#86198f">2. Jev 决策</text>
+      <text x="14" y="60" class="card-header" fill="#0f172a">多 Head 投机并发</text>
+      
+      <text x="14" y="90" class="card-body">
+        <tspan x="14" dy="0">• <tspan font-weight="700">单次网络往返</tspan>: ~350-450ms</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">Head 1: Operation</tspan></tspan>
+        <tspan x="26" dy="20">TAP / SCROLL / TYPE_TEXT / DONE</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">Head 2: Target Choice</tspan></tspan>
+        <tspan x="26" dy="20">仅计算所选操作对应兼容候选</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">Head 3: Noul 达成度</tspan></tspan>
+        <tspan x="26" dy="20">连续概率判定目标达成度</tspan>
+      </text>
+
+      <rect x="14" y="250" width="222" height="32" fill="#fdf2f8" stroke="#fbcfe8" rx="6" />
+      <text x="20" y="270" font-size="11.5" fill="#9d174d" font-weight="700">置信度门禁: conf &lt; 0.60 自动拦截</text>
+    </g>
+
+    <!-- Arrow 2 -> 3 -->
+    <path d="M 538 200 L 562 200" class="arrow" marker-end="url(#arrow-head)" />
+
+    <!-- Step 3: Safety & Hit Check -->
+    <g transform="translate(562, 56)">
+      <rect width="250" height="295" class="node-card" stroke="#e0e7ff" />
+      <rect x="14" y="14" width="76" height="22" fill="#fef2f2" rx="5" />
+      <text x="20" y="29" class="badge-text" fill="#991b1b">3. 安全校验</text>
+      <text x="14" y="60" class="card-header" fill="#0f172a">重定位与防抢点</text>
+      
+      <text x="14" y="90" class="card-body">
+        <tspan x="14" dy="0">• <tspan font-weight="700">跨帧目标重定位 (Relocalize)</tspan></tspan>
+        <tspan x="26" dy="20">标签精确匹配 + Frame IoU 重合度</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">点命中测试 (Hit-Check)</tspan></tspan>
+        <tspan x="26" dy="20">describe-point 校验顶层覆盖</tspan>
+        <tspan x="26" dy="20">阻断横幅弹窗抢点与转场误触</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">高危词表拦截</tspan>: 支付/删除拒点</tspan>
+      </text>
+
+      <rect x="14" y="250" width="222" height="32" fill="#fef2f2" stroke="#fecaca" rx="6" />
+      <text x="24" y="270" font-size="11.5" font-weight="700" fill="#b91c1c">异常立即交还控制权给父 Agent</text>
+    </g>
+
+    <!-- Arrow 3 -> 4 -->
+    <path d="M 812 200 L 836 200" class="arrow" marker-end="url(#arrow-head)" />
+
+    <!-- Step 4: Dispatch & Execution -->
+    <g transform="translate(836, 56)">
+      <rect width="240" height="295" class="node-card" stroke="#e0e7ff" />
+      <rect x="14" y="14" width="76" height="22" fill="#ecfdf5" rx="5" />
+      <text x="20" y="29" class="badge-text" fill="#065f46">4. 物理手势下发</text>
+      <text x="14" y="60" class="card-header" fill="#0f172a">idb 执行与读回</text>
+      
+      <text x="14" y="90" class="card-body">
+        <tspan x="14" dy="0">• <tspan font-weight="700">点击 (TAP)</tspan>: 中心坐标 HID 注入</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">滑动 (SCROLL)</tspan>: 屏幕中线定长位移</tspan>
+        <tspan x="26" dy="20">避开列表边缘破坏性全幅滑动</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">中文输入 (TYPE_TEXT)</tspan>:</tspan>
+        <tspan x="26" dy="20">pbcopy 剪贴板 + Cmd+V (HID 25)</tspan>
+        <tspan x="14" dy="24">• <tspan font-weight="700">读回校验</tspan>: 验证 AXValue 与变化</tspan>
+      </text>
+
+      <rect x="14" y="250" width="212" height="32" fill="#f0fdf4" stroke="#bbf7d0" rx="6" />
+      <text x="24" y="270" font-size="11.5" font-weight="600" fill="#15803d">动作完成并回传最新状态</text>
+    </g>
+  </g>
+
+  <!-- Connecting Arrow Down: To Physical Device -->
+  <path d="M 600 615 L 600 645" class="arrow" marker-end="url(#arrow-head)" />
+
+  <!-- Section 3: Target Device (Bottom Layer) -->
+  <g transform="translate(50, 645)" filter="url(#shadow)">
+    <!-- Explicit dark rect without conflicting .node-card fill -->
+    <rect width="1100" height="75" fill="#0f172a" rx="12" stroke="#1e293b" stroke-width="1.5" />
+    <rect x="0" y="0" width="8" height="75" fill="#10b981" rx="4" />
+    <text x="28" y="34" font-family="-apple-system, sans-serif" font-weight="700" font-size="16" fill="#f8fafc">iOS 模拟器环境 (iOS 26 / Native Apps / System SpringBoard)</text>
+    <text x="28" y="58" font-family="-apple-system, sans-serif" font-size="13" fill="#94a3b8">底层驱动：真实注入 HID 触控手势并反馈实时渲染画面，闭环返回最新状态供父 Agent 评估</text>
+    
+    <rect x="960" y="24" width="110" height="28" fill="#1e293b" stroke="#334155" rx="6" />
+    <text x="978" y="42" class="badge-text" fill="#34d399">真实手势执行</text>
+  </g>
+
+</svg>

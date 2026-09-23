@@ -1,5 +1,9 @@
 # flick ⚡
 
+<p align="center">
+  <img src="docs/flick_architecture.svg" alt="flick Architecture and Gesture Loop" width="100%" />
+</p>
+
 **A fast iOS simulator agent with a dynamic, indexed action space.**
 
 Give it one micro-goal. [TypeSafe's Jev](https://typesafe.ai) picks an operation and an element. The simulator executes via [Facebook idb](https://github.com/facebook/idb). Built as a sub-second "reflex layer" for parent coding agents (Codex, Claude Code) driving mobile UIs.

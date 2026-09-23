@@ -16,6 +16,10 @@ flick 让 agent 操作 iPhone 模拟器。每一步由 TypeSafe Jev 在固定选
 
 ## 2. 系统总览
 
+<p align="center">
+  <img src="flick_architecture.svg" alt="flick 架构设计与手势决策闭环" width="100%" />
+</p>
+
 ```mermaid
 flowchart TD
     G[任务目标 + 完成条件 + 给定文本值] --> L[agent 循环]
@@ -36,9 +40,9 @@ flowchart TD
 |---|---|---|---|
 | 设备封装 | `flick/device.py` | 已完成 | idb/simctl 调用、开机检测、读取重试、手势、粘贴、截图 |
 | 观测器 | `flick/observer.py` | 已完成 | 树清洗、元素表、modal 提取、稳定读取、跨帧重定位 |
-| 决策层 | `flick/model.py`（待建） | 里程碑 2 | 构造多 head choice 请求、校验概率分布、完成度 noul |
-| 安全执行器 | `flick/executor.py`（待建） | 里程碑 3 | 重读重定位、describe-point 命中校验、执行、读回 |
-| 循环控制 | `flick/agent.py`（待建） | 里程碑 4 | tick 调度、预算、卡死检测、升级策略 |
+| 决策层 | `flick/model.py` | 已完成 | 构造多 head choice 请求、校验概率分布、完成度 noul |
+| 安全执行器 | `flick/executor.py` | 已完成 | 重读重定位、describe-point 命中校验、执行、读回 |
+| 循环控制 | `flick/cli.py` (run) | 已完成 | 单步执行调度、置信度门禁、敏感词拦截 |
 
 单步时序：
 
