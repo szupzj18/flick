@@ -1,0 +1,58 @@
+[
+  {
+    "id": "settings_general",
+    "fixture": "settings.json",
+    "goal": "打开通用设置",
+    "completion": "屏幕显示通用设置的子页面，出现关于本机等选项",
+    "gold_op": "TAP",
+    "gold_target_label": "通用"
+  },
+  {
+    "id": "settings_scroll_down",
+    "fixture": "settings.json",
+    "goal": "修改开发者设置",
+    "completion": "显示开发者选项页面",
+    "gold_op": "SCROLL_DOWN",
+    "gold_target_label": null
+  },
+  {
+    "id": "settings_done",
+    "fixture": "settings.json",
+    "goal": "返回设置首页",
+    "completion": "当前可见设置应用的最顶层菜单",
+    "gold_op": "DONE",
+    "gold_target_label": null
+  },
+  {
+    "id": "springboard_maps",
+    "fixture": "springboard.json",
+    "goal": "打开地图App",
+    "completion": "地图应用在前台运行",
+    "gold_op": "TAP",
+    "gold_target_label": "地图"
+  },
+  {
+    "id": "safari_read",
+    "fixture": "safari.json",
+    "goal": "点进 Learn more 了解详情",
+    "completion": "详情页面加载完毕",
+    "gold_op": "TAP",
+    "gold_target_label": "Learn more"
+  },
+  {
+    "id": "safari_wait",
+    "fixture": "safari.json",
+    "goal": "等待页面上的视频加载完毕",
+    "completion": "视频播放器可见",
+    "gold_op": "WAIT",
+    "gold_target_label": null
+  },
+  {
+    "id": "reminders_type",
+    "fixture": "reminders_edit.json",
+    "goal": "把标题写成'买牛奶'",
+    "completion": "标题输入框的内容变为'买牛奶'",
+    "gold_op": "TYPE_TEXT",
+    "gold_target_label": "标题"
+  }
+]
